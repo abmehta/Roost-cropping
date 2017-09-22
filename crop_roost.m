@@ -4,13 +4,25 @@ csvfile = fullfile(path,'get_labels_meters.csv');
 fmt = '%d %s %d %s %d %d %d %d %d %d %d %f %f %f';
 radardata = csv2struct(csvfile,fmt);
 
-%%Loop to go over all lines
+%%Loop to go over multiple lines in file
 for counter=1:2030
     roost = radardata(counter);
     
     %%Get scan
     filename = roost.filename;
     station = roost.station;
+    if roost.month<=9 
+        month = strcat('0',int2str(roost.month));
+    else
+        month = int2str(roost.month);
+    end
+    if roost.day<=9
+        day = strcat('0',int2str(roost.day));
+    else
+        day = int2str(roost.day);
+    end 
+    path = strcat('data/stations/',roost.station,'/',int2str(roost.year),'/',month,'/',day,'/');
+    %path=roost.station+'/'+roost.filename;
     radar = rsl2mat(fullfile(path,filename),station);
 
     %%Read in Cartesian coordinates
@@ -40,6 +52,8 @@ for counter=1:2030
     %Fix points that fall outsde grid
     I = I(I>0);
     J = J(J>0);
+    I = I(I<1800);
+    J = J(J<1800);
     
     %Crop data
     patch = data(I,J);
@@ -62,8 +76,8 @@ for counter=1:2030
     cmap = colormap(ddd);
     
     % Save image as gif file
-    new_filename = strcat(regexprep(filename,'\.[^\.]*$',''),'_crop');
+    %new_filename = strcat(regexprep(filename,'\.[^\.]*$',''),'_crop');
     scale_patch = mat2ind(patch,dzlim,cmap);
     imshow(scale_patch,cmap);
-    imwrite_gif_nan(scale_patch,cmap,sprintf('data/cropped_images/%s_%d.gif',new_filename,counter));    
+    imwrite_gif_nan(scale_patch,cmap,sprintf('data/cropped_images/%d.gif',counter));    
 end
